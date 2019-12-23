@@ -21,7 +21,7 @@ func NewWeakRef(v interface{}) *WeakRef {
 	w := &WeakRef{^i[0], ^i[1]}
 	runtime.SetFinalizer((*uintptr)(unsafe.Pointer(&i[1])), func(_ *uintptr) {
 		atomic.StoreUintptr(&w.d, uintptr(0))
-		w.t = uintptr(0)
+		atomic.StoreUintptr(&w.t, uintptr(0))
 	})
 	return w
 }
@@ -33,7 +33,7 @@ func (w *WeakRef) IsAlive() bool {
 
 // GetTarget -- return a target object/interface{} from WeakRef
 func (w *WeakRef) GetTarget() (v interface{}) {
-	t := w.t
+	t := atomic.LoadUintptr(&w.t)
 	d := atomic.LoadUintptr(&w.d)
 	if d != 0 {
 		i := (*[2]uintptr)(unsafe.Pointer(&v))
